@@ -52,6 +52,7 @@ function run()
 	var deltaTime = getDeltaTime();
 	
 	player.update(deltaTime);
+	drawMap();
 	player.draw();
 	
 	// update the frame counter 
