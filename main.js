@@ -3,7 +3,6 @@ var context = canvas.getContext("2d");
 
 var startFrameMillis = Date.now();
 var endFrameMillis = Date.now();
-
 // This function will return the time in seconds since the function 
 // was last called
 // You should only call this function once per frame
@@ -29,10 +28,6 @@ function getDeltaTime()
 
 //-------------------- Don't modify anything above here
 
-var SCREEN_WIDTH = canvas.width;
-var SCREEN_HEIGHT = canvas.height;
-
-
 // some variables to calculate the Frames Per Second (FPS - this tells use
 // how fast our game is running, and allows us to make the game run at a 
 // constant speed)
@@ -40,8 +35,50 @@ var fps = 0;
 var fpsCount = 0;
 var fpsTime = 0;
 
-var keyboard = new Keyboard();
+var METER = TILE;
 
+var GRAVITY = METER * 6.3 * 6;
+
+var MAXDX = METER * 10;
+var MAXDY = METER * 15;
+
+var ACCEL = MAXDX * 2;
+var FRICTION = MAXDX * 6;
+
+var JUMP = METER * 1500;
+
+//collision array
+var cells =[];
+function initialise()
+{
+	for (var layerIdx = 0; layerIdx < LAYER_COUNT; layerIdx++)
+	{
+		cells[layerIdx] = [];
+		var idx = 0;
+		for (var y = 0; y < level.layers[layerIdx].height; y++)
+		{
+			cells[layerIdx][y] = [];
+			for (var x = 0; x < level.layers[layerIdx].width; x++)
+			{
+				if (level.layers[layerIdx].data[idx] != 0)
+				{
+					cells[layerIdx][y][x] = 1;
+					cells[layerIdx][y][x+1] = 1;
+					cells[layerIdx][y-1][x] = 1;
+					cells[layerIdx][y-1][x+1] = 1;
+				}
+				else if (cells[layerIdx][y][x] != 0)
+				{
+					cells[layerIdx][y][x] = 0;
+				}
+				idx++;
+			}
+		}
+	}
+}
+
+initialise();
+var keyboard = new Keyboard();
 var player = new Player();
 
 function run()
@@ -50,12 +87,14 @@ function run()
 	context.fillRect(0, 0, canvas.width, canvas.height);
 	
 	var deltaTime = getDeltaTime();
-	
+			
 	player.update(deltaTime);
+	
+	
 	drawMap();
 	player.draw();
 	
-	// update the frame counter 
+		// update the frame counter 
 	fpsTime += deltaTime;
 	fpsCount++;
 	if(fpsTime >= 1)
