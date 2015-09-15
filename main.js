@@ -37,7 +37,7 @@ var fpsTime = 0;
 
 var METER = TILE;
 
-var GRAVITY = METER * 6.3 * 6;
+var GRAVITY = METER * 6.3 * 3;
 
 var MAXDX = METER * 10;
 var MAXDY = METER * 15;
