@@ -57,6 +57,9 @@ var Player = function(){
 	this.x = 9 * TILE;
 	this.y = 0 * TILE;
 	
+	this.start_x = this.x;
+	this.start_y = this.y;
+	
 	this.width = 159;
 	this.height = 163;
 	
@@ -67,7 +70,26 @@ var Player = function(){
 	this.velocity_y = 0;
 	
 	this.falling = true;
-	this.jumping = false;	
+	this.jumping = false;
+	
+	this.lives = 3;
+	this.lives_image = document.createElement("img");
+	this.lives_image.src = "heart.png";
+	
+	
+	//////////////////////////////////
+	var self = this;
+	this.jump_sfx_isPlaying = false;
+	this.jump_sfx = new Howl(
+	{
+		urls : ["fireEffect.ogg"],
+		buffer : true,
+		volume : 1,
+		onend: function() {
+			self.jump_sfx_isPlaying = false;
+		}
+	});
+	//////////////////////////////////
 };
 
 Player.prototype.update = function(deltaTime)
@@ -122,6 +144,7 @@ Player.prototype.update = function(deltaTime)
 		if (right)
 			this.sprite.setAnimation(ANIM_JUMP_RIGHT);
 	}
+	
 	else if (keyboard.isKeyDown(keyboard.KEY_SHIFT) && !jump)
 	{
 		this.shooting = true;
@@ -166,6 +189,13 @@ Player.prototype.update = function(deltaTime)
 			this.sprite.setAnimation(ANIM_JUMP_LEFT);
 		else
 			this.sprite.setAnimation(ANIM_JUMP_RIGHT);
+		
+		if (!this.jump_sfx_isPlaying)
+		{
+			this.jump_sfx.play();
+			this.jump_sfx_isPlaying = true;
+		}		
+		
 	}
 	
 	this.x = Math.floor( this.x + (deltaTime * this.velocity_x));
@@ -232,17 +262,29 @@ Player.prototype.update = function(deltaTime)
 			this.x = tileToPixel(tx + 1);
 			this.velocity_x = 0;
 		}
-	}		
+	}
+	
+	if (this.y > canvas.height + 300)
+	{
+		this.lives --;
+		this.x = this.start_x;
+		this.y = this.start_y;
+	}
 }
 
-Player.prototype.draw = function()
+Player.prototype.draw = function(cam_x, cam_y)
 {
-	this.sprite.draw(context, this.x, this.y);
+	this.sprite.draw(context, this.x - cam_x, this.y - cam_y);
 	
-	//old nasty as code
-	//context.save();
-	//	context.translate(this.x, this.y);
-	//	context.rotate(this.rotation);
-	//	context.drawImage(this.image, this.offset_x, this.offset_y);
-	//context.restore();
+	for (var i = 0; i < this.lives; i++)
+	{
+		context.save();
+			context.translate(50 + ( 5 + this.lives_image.width) * i, 40);
+			context.drawImage(this.lives_image,
+				-this.lives_image.width/2, -this.lives_image.height/2,
+				this.lives_image.width, this.lives_image.height);		
+		context.restore();
+	}	
 }
+
+
