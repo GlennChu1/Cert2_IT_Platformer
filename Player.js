@@ -76,6 +76,9 @@ var Player = function(){
 	this.lives_image = document.createElement("img");
 	this.lives_image.src = "heart.png";
 	
+	this.gun = 1;
+	this.gun_image = document.createElement("img");
+	this.gun_image.src = "SMG.png"
 	
 	//////////////////////////////////
 	var self = this;
@@ -90,6 +93,30 @@ var Player = function(){
 		}
 	});
 	//////////////////////////////////
+
+	this.cur_bullet_index = 0;
+	this.max_bullets = 50;
+	this.bullets = [];
+	for (var i = 0; i < this.max_bullets; i++)
+	{
+		this.bullets[i] = new Bullet();
+	}
+	this.shoot_timer = 0.01;
+	this.shoot_cooldown = 0.0;
+	
+	var self = this;
+	this.bullet_sfx_isPlaying = true;
+	this.bullet_sfx = new Howl(
+	{
+		urls : ["fireEffect.ogg"],
+		buffer : true,
+		volume : 1,
+		onend: function() {
+			self.bullet_sfx_isPlaying = true;
+		}
+	});
+	
+	
 };
 
 Player.prototype.update = function(deltaTime)
@@ -120,7 +147,7 @@ Player.prototype.update = function(deltaTime)
 	}
 	else
 	{
-		if (!this.jumping && !this.falling)
+		if (!this.jumping && !this.falling && !this.shooting)
 		{
 			if (this.direction == LEFT)
 			{
@@ -145,7 +172,36 @@ Player.prototype.update = function(deltaTime)
 			this.sprite.setAnimation(ANIM_JUMP_RIGHT);
 	}
 	
-	else if (keyboard.isKeyDown(keyboard.KEY_SHIFT) && !jump)
+	
+	if (keyboard.isKeyDown(keyboard.KEY_SHIFT))
+	{
+		if (this.shoot_cooldown <= 0.0)
+		{
+			var jitter = Math.random() * 0.2 - 0.1;
+			
+			if (this.direction == LEFT)
+				this.bullets[this.cur_bullet_index].fire(this.x, this.y, -1, jitter);
+			else
+				this.bullets[this.cur_bullet_index].fire(this.x, this.y, 1, jitter);
+			
+			this.shoot_cooldown = this.shoot_timer;
+			
+			this.cur_bullet_index ++;
+			if (this.cur_bullet_index >= this.max_bullets)
+				this.cur_bullet_index = 0;
+		}
+	}
+	//cooldown the bullets
+	if (this.shoot_cooldown > 0.0)
+		this.shoot_cooldown -= deltaTime;
+	
+	//update the bullets
+	for (var i = 0; i < this.max_bullets; i++ )
+	{
+		this.bullets[i].update(deltaTime);
+	}
+	
+	if (keyboard.isKeyDown(keyboard.KEY_SHIFT) && !jump)
 	{
 		this.shooting = true;
 		if (this.direction == LEFT)
@@ -162,8 +218,7 @@ Player.prototype.update = function(deltaTime)
 	
 	else if (this.shooting)
 		this.shooting = false;
-	
-	
+		
 	var wasleft = (this.velocity_x < 0);
 	var wasright = (this.velocity_x > 0);
 	var falling = this.falling;
@@ -276,6 +331,12 @@ Player.prototype.draw = function(cam_x, cam_y)
 {
 	this.sprite.draw(context, this.x - cam_x, this.y - cam_y);
 	
+	for (var i = 0; i < this.max_bullets; i++)
+	{
+		this.bullets[i].draw(cam_x, cam_y);
+	}
+	
+	
 	for (var i = 0; i < this.lives; i++)
 	{
 		context.save();
@@ -283,6 +344,15 @@ Player.prototype.draw = function(cam_x, cam_y)
 			context.drawImage(this.lives_image,
 				-this.lives_image.width/2, -this.lives_image.height/2,
 				this.lives_image.width, this.lives_image.height);		
+		context.restore();
+	}
+	
+	{
+		context.save();
+			context.translate(500, 30);
+			context.drawImage(this.gun_image,
+				-this.gun_image.width/2, -this.gun_image.height/2,
+				this.gun_image.width, this.gun_image.height);
 		context.restore();
 	}	
 }
