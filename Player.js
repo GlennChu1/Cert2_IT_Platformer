@@ -10,6 +10,7 @@ var ANIM_WALK_RIGHT = 5;
 var ANIM_SHOOT_LEFT = 6;
 var ANIM_SHOOT_RIGHT = 7;
 var ANIM_MAX = 8;
+bulletsCount = 500;
 
 var Player = function(){
 	// delete me
@@ -108,14 +109,23 @@ var Player = function(){
 	this.bullet_sfx_isPlaying = true;
 	this.bullet_sfx = new Howl(
 	{
-		urls : ["fireEffect.ogg"],
+		urls : ["jump.wav"],
 		buffer : true,
 		volume : 1,
 		onend: function() {
-			self.bullet_sfx_isPlaying = true;
+			self.bullet_sfx_isPlaying = false;
 		}
 	});
 	
+	this.cur_bullet_index = 0;
+	this.max_bullets = 100;
+	this.bullets = [];
+	for (var i = 0; i < this.max_bullets; i++)
+	{
+		this.bullets[i] = new Bullet();
+	}
+	this.shoot_timer = 0.01;
+	this.shoot_cooldown = 0.2;
 	
 };
 
@@ -162,6 +172,11 @@ Player.prototype.update = function(deltaTime)
 		}
 	}
 	
+	context.fillStyle = "#000000";
+	context.font = "24px Arial";
+	context.fillText(": " + Math.ceil(bulletsCount), 550, 30)
+		
+	
 	if (keyboard.isKeyDown(keyboard.KEY_SPACE))
 	{
 		jump = true;
@@ -173,7 +188,7 @@ Player.prototype.update = function(deltaTime)
 	}
 	
 	
-	if (keyboard.isKeyDown(keyboard.KEY_SHIFT))
+	if (keyboard.isKeyDown(keyboard.KEY_SHIFT) && bulletsCount > 0)
 	{
 		if (this.shoot_cooldown <= 0.0)
 		{
@@ -189,6 +204,19 @@ Player.prototype.update = function(deltaTime)
 			this.cur_bullet_index ++;
 			if (this.cur_bullet_index >= this.max_bullets)
 				this.cur_bullet_index = 0;
+			
+			bulletsCount--;
+			this.shooting = true;
+			if (this.direction == LEFT)
+			{	
+				if (this.sprite.currentAnimation != ANIM_SHOOT_LEFT)
+					this.sprite.setAnimation(ANIM_SHOOT_LEFT);
+			}
+			else
+			{	
+				if (this.sprite.currentAnimation != ANIM_SHOOT_RIGHT)
+					this.sprite.setAnimation(ANIM_SHOOT_RIGHT);
+			}
 		}
 	}
 	//cooldown the bullets
@@ -201,7 +229,7 @@ Player.prototype.update = function(deltaTime)
 		this.bullets[i].update(deltaTime);
 	}
 	
-	if (keyboard.isKeyDown(keyboard.KEY_SHIFT) && !jump)
+	if (keyboard.isKeyDown(keyboard.KEY_SHIFT) && !jump && bulletsCount > 0)
 	{
 		this.shooting = true;
 		if (this.direction == LEFT)

@@ -99,16 +99,40 @@ function run()
 	context.fillRect(0, 0, canvas.width, canvas.height);
 	
 	var deltaTime = getDeltaTime();
-			
-	player.update(deltaTime);
 	
-	cam_x = bound(player.x - canvas.width / 2, 0, MAP.tw * TILE);
-	cam_y = bound(player.y - canvas.height / 2, 0, canvas.height);
-		
-	drawMap(cam_x, cam_y);
-	player.draw(cam_x, cam_y);
-	
-		// update the frame counter 
+	if(player.lives < 1)
+	{
+		restart = 1;
+		context.fillStyle = "#f00";
+		context.font="14px Arial";
+		context.fillText("GAME OVER ", 5, 20, 100);
+		context.fillText("Press ENTER to restart", 5, 100);
+
+		if (keyboard.isKeyDown(keyboard.KEY_ENTER))
+		{
+			player.lives = 3;
+		}
+
+	}
+	else
+	{
+		player.update(deltaTime);
+		cam_x = bound(player.x - canvas.width / 2, 0, MAP.tw * TILE - canvas.width);
+		cam_y = bound(player.y - canvas.height / 2, 0, MAP.th * TILE - canvas.height);
+		restart = 0;
+
+		drawMap(cam_x, cam_y);
+		player.draw(cam_x, cam_y);
+
+		context.fillStyle = "yellow";
+		context.font="20px Arial";
+		//context.fillText(BulletCounter, (canvas.width *.92), 28, 100);
+		//context.drawImage(bulletImage, (canvas.width *.88), 10, 20, 20);
+
+	}
+
+
+	// update the frame counter 
 	fpsTime += deltaTime;
 	fpsCount++;
 	if(fpsTime >= 1)
